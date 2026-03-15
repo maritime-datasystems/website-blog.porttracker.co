@@ -23,29 +23,15 @@ jobs:
       - name: Build Astro Website
         run: npm run build
           
-      - name: Install SSH Key
-        uses: shimataro/ssh-key-action@v2
+      - name: Sync files via FTP to Hetzner
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          key: ${{ secrets.SSH_PRIVATE_KEY }} 
-          known_hosts: unnecessary
-          if_key_exists: replace
-
-      - name: Adding Known Hosts
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-        run: |
-          HOST=$(echo "$SSH_HOST" | xargs)
-          ssh-keyscan -p 222 -H "$HOST" >> ~/.ssh/known_hosts
-
-      - name: Deploy with rsync
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_TARGET: ${{ secrets.REMOTE_TARGET }}
-        run: |
-          HOST=$(echo "$SSH_HOST" | xargs)
-          USER=$(echo "$SSH_USER" | xargs)
-          TARGET=$(echo "$REMOTE_TARGET" | xargs)
-
-          echo "Deploying to $USER@$HOST:$TARGET on port 222"
-          rsync -avz --delete -e "ssh -p 222" dist/ "$USER@$HOST:$TARGET"
+          server: ${{ secrets.FTP_SERVER }}
+          protocol: ftps
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/ 
+          server-dir: /public_html/blog_porttracker/
+          dry-run: false
+          security: loose
+          timeout: 600000
